@@ -1,19 +1,42 @@
-run = "npm run dev"
-modules = ["nodejs-20"]
-hidden = [".config", "package-lock.json"]
-entrypoint = "index.html"
+run = "bash ./run_both.sh"
+modules = ["nodejs-20", "python-3.11"]
+
+[languages]
+python = { main_file = "main.py" }
+nodejs = { main_file = "index.js" }
 
 [nix]
-channel = "stable-24_05"
+pkgs = ["nodejs", "python3", "pip"]
+packages = ["glibcLocales", "zip"]
 
-[unitTest]
-language = "nodejs"
-
-[deployment]
-deploymentTarget = "static"
-build = ["npm", "run", "build"]
-publicDir = "dist"
+[[ports]]
+localPort = 5000
+externalPort = 5000
 
 [[ports]]
 localPort = 5173
 externalPort = 80
+
+[[ports]]
+localPort = 5174
+externalPort = 3000
+
+[[ports]]
+localPort = 5175
+externalPort = 3001
+
+[[ports]]
+localPort = 5176
+externalPort = 3002
+
+[[ports]]
+localPort = 5177
+externalPort = 3003
+
+[[ports]]
+localPort = 5178
+externalPort = 4200
+
+[[ports]]
+localPort = 5179
+externalPort = 5173

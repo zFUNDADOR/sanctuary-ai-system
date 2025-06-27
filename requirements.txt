@@ -1,0 +1,6 @@
+Flask
+numpy
+scikit-learn
+flask-cors
+google-generativeai
+firebase-admin

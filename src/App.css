@@ -1,2 +1,190 @@
-main {
+/* src/App.css */
+
+/* Define variáveis CSS globais no elemento raiz (<html>) */
+:root {
+  /* Estas são cores de fallback, serão sobrescritas dinamicamente pelo JS com RGBA */
+  --dashboard-base-color: rgba(46, 52, 64, 0.7); /* Cor padrão Nord (cinza escuro) com transparência */
+  --dashboard-lighter-color: rgba(67, 76, 94, 0.85); /* Cor mais clara para bordas/links com transparência */
+  --dashboard-darker-color: rgba(36, 41, 48, 0.9); /* Cor mais escura para sombras com transparência */
+  --section-background-color: rgba(46, 52, 64, 0.85); /* Cor de fundo para balões internos, com transparência */
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: #eceff4; /* Texto claro */
+}
+
+/* O elemento que tem a classe .App é o contêiner principal */
+.App {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh; /* Ocupa a altura total da viewport */
+  padding: 20px;
+  box-sizing: border-box; /* Garante que padding não estoure o tamanho */
+  background-color: #282c34; /* Cor de fundo padrão se nenhuma imagem for selecionada */
+  transition: background-image 0.5s ease; /* Transição suave para a imagem de fundo */
+}
+
+.App-header {
+  background-color: rgba(26, 26, 26, 0.7); /* Fundo semi-transparente para o header */
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  margin-bottom: 30px;
+  width: 80%;
+  max-width: 900px;
+  display: flex;
+  justify-content: center;
+  align-items: center; /* Alinha itens verticalmente no header */
+  flex-wrap: wrap; /* Permite que os itens quebrem linha em telas menores */
+}
+
+.App-header nav {
+  display: flex;
+  flex-wrap: wrap; /* Permite que os botões de navegação quebrem linha */
+  margin-right: 20px; /* Espaço entre nav e seletor de cores */
+}
+
+.App-header button {
+  padding: 12px 25px;
+  margin: 5px 10px; /* Ajuste para espaçamento em telas menores */
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1em;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  background-color: #4c566a; /* Cor padrão para botões de navegação */
+  color: #eceff4;
+}
+
+.App-header button.active {
+  background-color: #61dafb; /* Cor de destaque para botão ativo */
+  color: #282c34;
+  font-weight: bold;
+}
+
+.App-header button:hover:not(.active) {
+  background-color: #6d7b90;
+}
+
+/* Estilo para o contêiner do Dashboard (o "balão" maior) */
+.dashboard-container {
+  /* REMOVIDO: background-color será definido via JS usando --dashboard-base-color */
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px var(--dashboard-darker-color, rgba(0, 0, 0, 0.3)); /* Usa a variável para a sombra */
+  width: 80%;
+  max-width: 900px;
+  text-align: center;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Estilos para os containers internos das seções (os "balões" menores) */
+.section-content-box {
+  margin-top: 20px;
+  padding: 15px;
+  border: 1px dashed var(--dashboard-lighter-color, #61dafb); /* Borda da cor mais clara ou fallback */
+  background-color: var(--section-background-color); /* AGORA USA A NOVA VARIÁVEL DEFINIDA E CONTROLADA PELO JS */
+  border-radius: 5px;
+  text-align: left;
+  transition: background-color 0.3s ease, border-color 0.3s ease; /* Transição suave */
+}
+
+/* Estilos para o corpo do texto e títulos para melhor contraste */
+h2, h3, p {
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8); /* Sombra preta para melhor legibilidade */
+  color: #eceff4; /* Garante que a cor do texto seja clara */
+}
+
+/* Estilos para listas dentro das seções (vídeos, mapas mentais) */
+.section-content-box ul {
+  list-style-type: none;
+  padding: 0;
+  margin-bottom: 20px; /* Espaço após a lista */
+}
+
+.section-content-box li {
+  margin-bottom: 8px;
+}
+
+.section-content-box li a,
+.section-content-box li span { /* Estilo para links e spans em listas */
+  color: var(--dashboard-lighter-color, #61dafb); /* Links e spans com a cor mais clara ou fallback */
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.section-content-box li a:hover {
+  color: #88c0d0; /* Cor de hover para links */
+}
+
+/* Estilos para botões dentro das seções */
+.section-content-box button {
+  padding: 8px 15px;
+  background-color: var(--dashboard-lighter-color, #61dafb); /* Botões com a cor mais clara ou fallback */
+  color: #282c34;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9em;
+  transition: background-color 0.2s ease;
+  margin-right: 10px;
+  margin-top: 10px;
+}
+
+.section-content-box button:hover {
+  background-color: #88c0d0;
+}
+
+.section-content-box button:last-child {
+  margin-right: 0;
+}
+
+/* Estilo específico para o input de arquivo */
+.custom-file-upload {
+  display: inline-block;
+  padding: 10px 15px;
+  cursor: pointer;
+  background-color: #4c566a; /* Cor de fundo similar aos botões de navegação */
+  color: #eceff4; /* Cor do texto */
+  border: none;
+  border-radius: 5px;
+  font-size: 0.9em;
+  transition: background-color 0.3s ease;
+  text-shadow: none; /* Remover sombra do texto se não desejar nos botões */
+}
+
+.custom-file-upload:hover {
+  background-color: #6d7b90; /* Escurece um pouco ao passar o mouse */
+}
+
+
+/* Estilo para a área de pré-visualização do conteúdo do arquivo */
+.file-content-preview {
+  margin-top: 15px;
+  padding: 15px;
+  background-color: var(--dashboard-darker-color, #282c34); /* Usa uma cor mais escura dos balões */
+  border: 1px solid var(--dashboard-lighter-color, #4c566a); /* Borda da cor mais clara dos balões */
+  border-radius: 5px;
+  max-height: 300px; /* Limita a altura para evitar que o conteúdo ocupe toda a tela */
+  overflow-y: auto; /* Adiciona scroll se o conteúdo for muito longo */
+  text-align: left;
+  white-space: pre-wrap; /* Preserva espaços e quebras de linha */
+  word-break: break-word; /* Quebra palavras longas para caber no container */
+  color: #eceff4; /* Cor do texto */
+  font-family: 'Consolas', 'Monaco', monospace; /* Fonte monoespaçada para código/texto */
+  font-size: 0.85em;
+  text-shadow: 0.5px 0.5px 1.5px rgba(0, 0, 0, 0.7);
+}
+
+.file-content-preview h4 {
+  margin-top: 0;
+  color: #88c0d0;
+  text-shadow: none;
 }
