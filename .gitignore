@@ -29,7 +29,7 @@ coverage
 # Grunt intermediate storage (https://gruntjs.com/creating-plugins#storing-task-files)
 .grunt
 
-# Bower dependency directory (https://bower.io/)
+# Bower dependency directory (https://bowerjs.com/)
 bower_components
 
 # node-waf configuration
@@ -40,6 +40,7 @@ build/Release
 
 # Dependency directories
 node_modules/
+pnp.*
 jspm_packages/
 
 # Snowpack dependency directory (https://snowpack.dev/)
@@ -78,6 +79,7 @@ web_modules/
 .env.test.local
 .env.production.local
 .env.local
+secrets.env # <--- ESTA LINHA É CRUCIAL!
 
 # parcel-bundler cache (https://parceljs.org/)
 .cache
@@ -127,4 +129,4 @@ dist
 .yarn/unplugged
 .yarn/build-state.yml
 .yarn/install-state.gz
-.pnp.*
+.
