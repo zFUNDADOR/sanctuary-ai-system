@@ -1,54 +1,53 @@
 import React, { useState, useRef } from 'react';
+// Certifique-se de que react-chartjs-2 e chart.js estão instalados
 import { Pie } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, Title } from 'chart.js';
 
 ChartJS.register(ArcElement, Tooltip, Legend, Title);
 
-// ** IMPORTANTE **
-// No Replit, a porta do backend Python (5000) é exposta em uma URL diferente.
-// Geralmente, é a mesma base URL do seu Replit, mas com a porta 5000.
-// Você pode verificar a URL do seu backend na aba "Console" ou "Shell" do Replit
-// quando o Flask iniciar (deve aparecer algo como "Running on http://0.0.0.0:5000").
-// A URL real para o frontend será algo como: https://[SEU_REPLIT_ID].janeway.replit.dev:5000
-// Ou apenas a base URL se o Replit fizer o proxy automático para /api
-// Para simplificar no Replit, muitas vezes basta usar a porta 5000 ou o proxy que ele oferece.
-// Para testar, vamos usar a URL do próprio Replit com a porta 5000.
-// Procure no console do Replit a mensagem "Running on http://0.0.0.0:5000" do Flask.
-// A URL completa será algo como: https://[SEU_NOME_DO_REPLIT].[SEU_USER].replit.dev:5000/api/analisar-seo
-// OU, mais simples, se o Replit fizer o proxy, apenas '/api/analisar-seo'
-// Vamos tentar com o caminho relativo primeiro, que é mais robusto no Replit se ele fizer o proxy.
-const BACKEND_URL = '/api/analisar-seo'; // Replit costuma fazer proxy para /api
+// Para ambiente local, o backend Flask roda em 127.0.0.1:5000
+const BACKEND_URL = 'http://127.0.0.1:5000/api/analisar-seo'; 
 
 function SEOSection() {
   const [fileContent, setFileContent] = useState(null);
   const [fileName, setFileName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const fileReader = useRef(null);
+  const fileInputRef = useRef(null); // Usar ref para o input de arquivo
   const [seoAnalysisData, setSeoAnalysisData] = useState(null);
+  const [message, setMessage] = useState(''); // Para exibir mensagens ao usuário
+  const [messageType, setMessageType] = useState(''); // 'success' ou 'error'
 
   const handleFileChange = (event) => {
     const file = event.target.files[0];
     if (file) {
       setFileName(file.name);
-      fileReader.current = new FileReader();
-      fileReader.current.onload = (e) => {
+      setMessage(''); // Limpa mensagens anteriores
+      setMessageType('');
+      const reader = new FileReader();
+      reader.onload = (e) => {
         setFileContent(e.target.result);
       };
-      fileReader.current.readAsText(file);
+      reader.readAsText(file);
     } else {
       setFileContent(null);
       setFileName('');
       setSeoAnalysisData(null);
+      setMessage('');
+      setMessageType('');
     }
   };
 
-  const handleProcessFile = async () => { // Adicione 'async' aqui
+  const handleProcessFile = async () => {
     if (!fileContent) {
-      alert("Por favor, selecione um arquivo para processar.");
+      setMessage("Por favor, selecione um arquivo para processar.");
+      setMessageType("error");
       return;
     }
 
     setIsLoading(true);
+    setMessage(""); // Limpa mensagens anteriores
+    setMessageType("");
+    setSeoAnalysisData(null); // Limpa dados anteriores
 
     try {
       const response = await fetch(BACKEND_URL, {
@@ -60,30 +59,33 @@ function SEOSection() {
       });
 
       if (!response.ok) {
-        // Se a resposta não for OK (ex: 400, 500), lança um erro
         const errorData = await response.json();
         throw new Error(errorData.error || `Erro de rede ou servidor: ${response.status}`);
       }
 
       const data = await response.json(); // Pega a resposta JSON do backend
       setSeoAnalysisData(data); // Define os dados recebidos para os infográficos
+      setMessage("Análise de SEO concluída com sucesso!");
+      setMessageType("success");
 
     } catch (error) {
       console.error("Erro ao processar arquivo:", error);
-      alert(`Erro ao processar o arquivo: ${error.message}. Verifique o console para mais detalhes.`);
+      setMessage(`Erro ao processar o arquivo: ${error.message}. Verifique o console para mais detalhes.`);
+      setMessageType("error");
       setSeoAnalysisData(null); // Limpa dados em caso de erro
     } finally {
       setIsLoading(false); // Sempre desativa o carregamento no final
     }
   };
 
+  // Opções para o gráfico de pizza (Chart.js) - Estilizado com cores Tailwind ou variáveis CSS
   const pieOptions = {
     responsive: true,
     plugins: {
       legend: {
         position: 'top',
         labels: {
-          color: '#eceff4',
+          color: '#eceff4', // Cor do texto da legenda
           font: {
             size: 14
           }
@@ -106,7 +108,7 @@ function SEOSection() {
       title: {
         display: true,
         text: 'Distribuição de Palavras-Chave Principais',
-        color: '#eceff4',
+        color: '#eceff4', // Cor do título do gráfico
         font: {
           size: 18
         }
@@ -115,12 +117,13 @@ function SEOSection() {
   };
 
   return (
-    <div>
-      <h3>Análise de Conteúdo SEO com Infográficos</h3>
-      <p>Faça upload de um arquivo de texto (.txt, .csv, etc.) para simular a análise e visualizar infográficos de dados.</p>
+    <div className="p-4"> {/* Adicionado padding para a seção, se necessário */}
+      <h3 className="text-xl font-semibold text-white mb-3">Análise de Conteúdo SEO com Infográficos</h3>
+      <p className="text-gray-400 mb-4">Faça upload de um arquivo de texto (.txt, .csv, etc.) para simular a análise e visualizar infográficos de dados.</p>
 
-      <div style={{ marginBottom: '20px' }}>
-        <label htmlFor="file-upload" className="custom-file-upload">
+      {/* Seletor de Arquivo */}
+      <div className="mb-5 flex items-center">
+        <label htmlFor="file-upload" className="px-5 py-2 bg-blue-600 text-white rounded-md cursor-pointer hover:bg-blue-700 transition duration-300">
           Escolher Arquivo
         </label>
         <input
@@ -128,72 +131,60 @@ function SEOSection() {
           type="file"
           accept=".txt,.csv,.json,.md"
           onChange={handleFileChange}
-          style={{ display: 'none' }}
+          ref={fileInputRef} // Atribui a ref ao input
+          className="hidden" // Esconde o input original
         />
-        {fileName && <span style={{ marginLeft: '10px', color: '#eceff4' }}>Arquivo selecionado: **{fileName}**</span>}
+        {fileName && <span className="ml-3 text-gray-300">Arquivo selecionado: <span className="font-bold">{fileName}</span></span>}
       </div>
 
+      {/* Pré-visualização do Conteúdo do Arquivo e Botão de Processar */}
       {fileContent && (
-        <div className="file-content-preview">
-          <h4>Pré-visualização do Conteúdo (500 primeiros caracteres):</h4>
-          <pre>{fileContent.substring(0, 500)}...</pre>
-          <button onClick={handleProcessFile} disabled={isLoading} style={{ marginTop: '15px' }}>
+        <div className="mt-4 p-4 bg-gray-800 rounded-lg shadow-md">
+          <h4 className="text-lg font-semibold text-gray-200 mb-2">Pré-visualização do Conteúdo (500 primeiros caracteres):</h4>
+          <pre className="p-3 bg-gray-900 rounded-md max-h-40 overflow-y-auto text-sm text-gray-300 whitespace-pre-wrap break-words">{fileContent.substring(0, 500)}...</pre>
+          <button
+            onClick={handleProcessFile}
+            disabled={isLoading}
+            className={`mt-4 px-5 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-300 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+          >
             {isLoading ? 'Processando Análise...' : 'Processar Arquivo para Análise'}
           </button>
         </div>
       )}
 
-      {isLoading && <p style={{ color: '#88c0d0', marginTop: '20px', fontSize: '1.1em' }}>**Analisando dados do arquivo...**</p>}
+      {/* Mensagens de status (carregamento, sucesso, erro) */}
+      {isLoading && (
+        <p className="text-blue-400 mt-5 text-lg font-semibold">Analisando dados do arquivo...</p>
+      )}
 
+      {message && (
+        <div className={`mt-5 p-3 rounded-md ${messageType === 'error' ? 'bg-red-800 text-red-100' : 'bg-green-800 text-green-100'}`}>
+          {message}
+        </div>
+      )}
+
+      {/* Exibição dos Infográficos de SEO */}
       {seoAnalysisData && (
-        <div style={{
-          marginTop: '30px',
-          display: 'flex',
-          flexWrap: 'wrap',
-          justifyContent: 'space-around',
-          gap: '25px',
-          width: '100%'
-        }}>
-          <div style={{
-            flex: '1 1 45%',
-            minWidth: '320px',
-            backgroundColor: 'var(--section-background-color)',
-            padding: '20px',
-            borderRadius: '8px',
-            boxShadow: '0 4px 10px var(--dashboard-darker-color)',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'center'
-          }}>
-            {/* O componente Pie agora recebe dados do backend */}
+        <div className="mt-6 flex flex-wrap justify-around gap-6 w-full">
+          {/* Gráfico de Pizza */}
+          <div className="flex-1 min-w-[320px] bg-gray-700 p-6 rounded-lg shadow-xl flex flex-col items-center justify-center">
             <Pie data={seoAnalysisData.keywordDistribution} options={pieOptions} />
           </div>
 
-          <div style={{
-            flex: '1 1 45%',
-            minWidth: '320px',
-            backgroundColor: 'var(--section-background-color)',
-            padding: '20px',
-            borderRadius: '8px',
-            boxShadow: '0 4px 10px var(--dashboard-darker-color)',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'flex-start',
-            alignItems: 'center'
-          }}>
-            <h4>Métricas Principais de Análise:</h4>
-            <table style={{ width: '90%', borderCollapse: 'collapse', color: '#eceff4', marginTop: '10px' }}>
+          {/* Métricas Principais */}
+          <div className="flex-1 min-w-[320px] bg-gray-700 p-6 rounded-lg shadow-xl flex flex-col items-center justify-start">
+            <h4 className="text-xl font-semibold text-gray-200 mb-4">Métricas Principais de Análise:</h4>
+            <table className="w-11/12 border-collapse text-gray-200 mt-2">
               <tbody>
                 {seoAnalysisData.keyMetrics.map((metric, index) => (
-                  <tr key={index} style={{ borderBottom: '1px solid var(--dashboard-lighter-color, rgba(200,200,200,0.3))' }}>
-                    <td style={{ padding: '10px 5px', textAlign: 'left', fontWeight: 'bold' }}>{metric.label}:</td>
-                    <td style={{ padding: '10px 5px', textAlign: 'right' }}>{metric.value}</td>
+                  <tr key={index} className="border-b border-gray-600 last:border-b-0">
+                    <td className="py-2 px-1 text-left font-semibold">{metric.label}:</td>
+                    <td className="py-2 px-1 text-right">{metric.value}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
-            <p style={{ fontSize: '0.85em', color: '#b48ead', marginTop: '20px' }}>*Dados gerados pelo backend Python.</p>
+            <p className="text-sm text-gray-400 mt-4 text-center">*Dados gerados pelo backend Python.</p>
           </div>
         </div>
       )}

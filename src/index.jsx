@@ -1,10 +1,11 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom';
-import App from './App';
+import App from './App.jsx';
+// Importação do arquivo CSS principal agora aponta para index.css
+import './index.css'; // <--- MUDANÇA AQUI!
 
 ReactDOM.createRoot(document.getElementById('root')).render(
-	<BrowserRouter>
-		<App />
-	</BrowserRouter>
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>,
 );

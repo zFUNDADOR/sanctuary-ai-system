@@ -1,5 +1,9 @@
 # main.py - Servidor Backend Python com Flask
 
+# Adicione estas duas linhas aqui, no topo do seu arquivo, logo após as importações iniciais do Python
+from dotenv import load_dotenv
+load_dotenv(dotenv_path='secrets.env') # Carrega as variáveis do secrets.env
+
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import sqlite3
@@ -38,7 +42,7 @@ try:
     firebase_service_account_str = os.environ.get("FIREBASE_SERVICE_ACCOUNT_KEY")
     if not firebase_service_account_str:
         raise ValueError("FIREBASE_SERVICE_ACCOUNT_KEY não está configurada nas variáveis de ambiente.")
-
+    
     # Converte a string JSON para um dicionário Python
     firebase_service_account_info = json.loads(firebase_service_account_str)
 
@@ -136,7 +140,7 @@ def gerar_mapa_mental_com_llm(texto_completo):
     de um texto e formatá-los para o mapa mental, aplicando a "Fórmula de Força de Influência".
     """
     model = genai.GenerativeModel(GEMINI_MODEL)
-
+    
     prompt_content = f"""
     Com base no seguinte texto, extraia o conceito principal, e para ele, extraia os 3 conceitos mais importantes e, para cada um desses 3, extraia 2 sub-conceitos relevantes.
     Para cada conceito (principal, sub-conceitos de nível 1 e sub-conceitos de nível 2), forneça um "node" (o nome do conceito) e um "relevance_score" (de 0.1 a 1.0, onde 1.0 é mais relevante).
@@ -177,12 +181,12 @@ def gerar_mapa_mental_com_llm(texto_completo):
     Texto:
     {texto_completo}
     """
-
+    
     llm_response_text = ""
 
     try:
         response = model.generate_content(prompt_content)
-
+        
         if response.candidates:
             if response.candidates[0].content.parts:
                 llm_response_text = response.candidates[0].content.parts[0].text
@@ -196,13 +200,13 @@ def gerar_mapa_mental_com_llm(texto_completo):
             json_string = json_match.group(1)
         else:
             json_string = llm_response_text.strip()
-
+        
         llm_data = json.loads(json_string)
 
         def calculate_influence(node_data, level=0):
             # Obtém os pesos da configuração global ATUAL
             weights_config = CURRENT_INFLUENCE_WEIGHTS["mapa_mental_niveis"]
-
+            
             weight_key_map = {
                 0: "nivel_0_principal",
                 1: "nivel_1_filhos",
@@ -210,18 +214,18 @@ def gerar_mapa_mental_com_llm(texto_completo):
                 3: "nivel_3_bisnetos"
             }
             weight_key = weight_key_map.get(level, "nivel_3_bisnetos")
-
+            
             Wn = weights_config.get(weight_key, 0.1) 
             Pn = node_data.get("relevance_score", 0.1)
-
+            
             influence_score = round(float(Pn) * Wn, 2)
             influence_score = max(0.05, min(1.0, influence_score))
-
+            
             node_data["influence_score"] = influence_score
-
+            
             if "children" in node_data and node_data["children"]:
                 node_data["children"] = [calculate_influence(child, level + 1) for child in node_data["children"]]
-
+            
             return node_data
 
         final_mind_map_data = calculate_influence(llm_data)
@@ -310,7 +314,7 @@ def salvar_logica():
 
     data = request.get_json()
     logica_a_salvar = data.get('logica', {})
-
+    
     if not db_firestore:
         return jsonify({"status": "erro", "mensagem": "Firestore não inicializado."}), 500
 
@@ -319,7 +323,7 @@ def salvar_logica():
         # Usamos set com merge=True para atualizar campos existentes e adicionar novos
         doc_ref = db_firestore.collection('configs').document('influence_weights')
         doc_ref.set(logica_a_salvar, merge=True)
-
+        
         # Atualiza a variável global com os pesos recém-salvos para uso imediato
         # Isso garante que a próxima chamada que usar CURRENT_INFLUENCE_WEIGHTS
         # já use os dados atualizados.
@@ -369,7 +373,7 @@ def gerar_mapa_mental():
         return jsonify({"error": "Conteúdo de texto para mapa mental não fornecido."}), 400
 
     mind_map_llm_data = gerar_mapa_mental_com_llm(content)
-
+    
     if "error" in mind_map_llm_data:
         print(f"Erro recebido de gerar_mapa_mental_com_llm: {mind_map_llm_data.get('error')}")
         return jsonify(mind_map_llm_data), 500
