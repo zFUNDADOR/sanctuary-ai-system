@@ -1,18 +1,13 @@
 /* src/index.css */
 
-/* Diretivas essenciais do Tailwind CSS. Devem ser as primeiras! */
+/* Diretivas essenciais do Tailwind CSS */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Estilos globais da aplicação. Priorize classes Tailwind em componentes sempre que possível. */
-html, body, #root { /* Garante que o html, body e o elemento raiz do React ocupem 100% da altura */
-  height: 100%;
-  margin: 0;
-  padding: 0;
-}
-
+/* Estilos globais da aplicação (use classes Tailwind em componentes sempre que possível) */
 body {
+  margin: 0;
   font-family: 'Inter', sans-serif; /* Usando Inter como a fonte principal */
   background-color: #1a202c; /* Fundo escuro para toda a aplicação */
   color: #e2e8f0; /* Cor de texto padrão clara */
@@ -21,7 +16,6 @@ body {
 }
 
 /* Variáveis CSS para fallback ou uso específico (se necessário, mas priorize Tailwind) */
-/* Estas variáveis são definidas no :root para que estejam disponíveis globalmente */
 :root {
   --dashboard-base-color: rgba(46, 52, 64, 0.7);
   --dashboard-lighter-color: rgba(67, 76, 94, 0.85);
