@@ -1,8 +1,16 @@
-/* src/App.css */
+/* Este arquivo pode ser usado para estilos globais específicos não tratados pelo Tailwind,
+   mas para a maioria das necessidades, as classes Tailwind no JSX são preferíveis. */
 
-/* Este arquivo será mantido minimalista. */
-/* A maioria dos estilos será aplicada diretamente nos componentes React usando classes Tailwind CSS. */
+/* Exemplo: Se você tiver fontes customizadas ou regras CSS muito específicas */
+/* @font-face {
+  font-family: 'Inter';
+  src: url('/fonts/Inter-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+} */
 
-/* Se houver variáveis CSS específicas de componente ou
-   regras que o Tailwind não pode expressar diretamente,
-   elas podem ir aqui. Por enquanto, mantê-lo vazio. */
+/* Para garantir que o Tailwind funcione, este arquivo é importado em App.jsx,
+   mas seus conteúdos principais de Tailwind estão em index.css. */
+
+/* Se você não tem nenhum CSS customizado aqui, pode deixar este arquivo vazio
+   ou apenas com um comentário, mas ele deve existir para o import em App.jsx. */

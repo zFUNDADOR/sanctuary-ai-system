@@ -1,11 +1,14 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { Tree } from 'react-d3-tree';
+import { Tree } from 'react-d3-tree'; // Importa o componente Tree
 
 function MindMapSection() {
   const [inputText, setInputText] = useState('');
   const [mindMapData, setMindMapData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const BACKEND_URL = '/api/gerar-mapa-mental';
+  const [message, setMessage] = useState(''); // Para exibir mensagens ao usuário
+  const [messageType, setMessageType] = useState(''); // 'success' ou 'error'
+
+  const BACKEND_URL = 'http://127.0.0.1:5000/api/gerar-mapa-mental';
 
   const [dimensions, setDimensions] = useState({ width: 800, height: 500 });
   const [translateState, setTranslateState] = useState({ x: 0, y: 0 });
@@ -24,10 +27,9 @@ function MindMapSection() {
           width: newWidth,
           height: newHeight,
         });
-        // Recalcular translate para centralizar após redimensionamento
         setTranslateState({
-          x: newWidth / 8, // Ajuste para o nó raiz aparecer mais à esquerda
-          y: newHeight / 2, // Centraliza verticalmente
+          x: newWidth / 8, 
+          y: newHeight / 2, 
         });
       });
       observer.observe(node);
@@ -58,26 +60,31 @@ function MindMapSection() {
   ];
 
   const handleNewMindMap = () => {
-    alert('Função "Novo Mapa Mental" ainda a ser implementada com editor!');
+    setMessage('Função "Novo Mapa Mental" ainda a ser implementada com editor!');
+    setMessageType('info');
     setMindMapData(null);
     setInputText('');
-    setSelectedNode(null); // Limpa o nó selecionado ao criar um novo mapa
-    setIsSidebarOpen(false); // Fecha a barra lateral
+    setSelectedNode(null); 
+    setIsSidebarOpen(false); 
   };
 
   const handleLoadMindMap = () => {
-    alert('Função "Carregar Mapa Mental Existente" ainda a ser implementada com backend real!');
+    setMessage('Função "Carregar Mapa Mental Existente" ainda a ser implementada com backend real!');
+    setMessageType('info');
   };
 
   const handleGenerateMindMap = async () => {
     if (!inputText.trim()) {
-      alert("Por favor, digite algum texto para gerar o mapa mental.");
+      setMessage("Por favor, digite algum texto para gerar o mapa mental.");
+      setMessageType("error");
       return;
     }
 
     setIsLoading(true);
-    setSelectedNode(null); // Limpa o nó selecionado
-    setIsSidebarOpen(false); // Fecha a barra lateral
+    setSelectedNode(null); 
+    setIsSidebarOpen(false); 
+    setMessage('');
+    setMessageType('');
 
     try {
       const response = await fetch(BACKEND_URL, {
@@ -88,52 +95,47 @@ function MindMapSection() {
         body: JSON.stringify({ content: inputText }),
       });
 
+      const data = await response.json();
+      
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Resposta não JSON ou vazia.' }));
-        throw new Error(errorData.error || `Erro do servidor: ${response.status}`);
+        throw new Error(data.error || `Erro do servidor: ${response.status}`);
       }
 
-      const data = await response.json();
-
-      // Função recursiva para formatar e adicionar a propriedade 'collapsed'
       const formatNode = (node) => ({
           name: node.node,
           attributes: {
               influence_score: node.influence_score
           },
-          // Se o nó tiver filhos do LLM, inicia não colapsado.
-          // O react-d3-tree usa _collapsed internamente quando você clica em um nó
-          // mas para controle via estado, usamos 'collapsed'.
-          collapsed: false, // Define todos os nós como não colapsados inicialmente
+          collapsed: false, 
           children: node.children ? node.children.map(formatNode) : undefined
       });
 
       const formattedData = formatNode(data);
       setMindMapData(formattedData);
+      setMessage("Mapa mental gerado com sucesso!");
+      setMessageType("success");
 
     } catch (error) {
       console.error("Erro ao gerar mapa mental:", error);
-      alert(`Erro ao gerar o mapa mental: ${error.message}. Verifique o console para mais detalhes.`);
+      setMessage(`Erro ao gerar o mapa mental: ${error.message}. Verifique o console para mais detalhes.`);
+      setMessageType("error");
       setMindMapData(null);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Lida com o clique no nó, abre a barra lateral e define o nó selecionado
   const handleTreeClick = useCallback((nodeDatum) => {
     setSelectedNode(nodeDatum);
     setIsSidebarOpen(true);
     console.log("Nó clicado:", nodeDatum.name, "Score:", nodeDatum.attributes?.influence_score);
   }, []);
 
-  // Função para fechar a barra lateral
   const closeSidebar = () => {
     setIsSidebarOpen(false);
     setSelectedNode(null);
   };
 
-  // Funções de controle de zoom e translação (agora manipulando o estado diretamente)
   const handleZoomIn = () => setZoomState(prev => prev * 1.2);
   const handleZoomOut = () => setZoomState(prev => prev / 1.2);
   const handleResetZoomPan = () => {
@@ -148,11 +150,9 @@ function MindMapSection() {
     }
   };
 
-  // NOVO: Função auxiliar recursiva para encontrar e atualizar o estado 'collapsed' de um nó
   const updateNodeCollapsedState = useCallback((nodes, targetNodeName, isCollapsed) => {
     return nodes.map(node => {
       if (node.name === targetNodeName) {
-        // Altera o estado 'collapsed' do nó
         return { ...node, collapsed: isCollapsed };
       }
       if (node.children) {
@@ -165,21 +165,17 @@ function MindMapSection() {
     });
   }, []);
 
-  // NOVO: Função para expandir/colapsar nó via barra lateral
   const handleToggleNodeChildren = (nodeToToggle) => {
     if (!mindMapData || !nodeToToggle) return;
 
-    // A lógica de colapsar/expandir é feita alterando a propriedade 'collapsed'
-    // no nosso estado `mindMapData`. O react-d3-tree irá reagir a isso.
     const newMindMapData = updateNodeCollapsedState(
-      [mindMapData], // Passa a raiz da árvore como um array
+      [mindMapData], 
       nodeToToggle.name,
-      !nodeToToggle.collapsed // Inverte o estado atual de colapso
-    )[0]; // Pega o primeiro elemento do array de volta
+      !nodeToToggle.collapsed 
+    )[0]; 
 
     setMindMapData(newMindMapData);
 
-    // Atualiza o nó selecionado na sidebar para refletir o novo estado de colapso
     const findUpdatedNode = (data, name) => {
         if (!data) return null;
         if (data.name === name) return data;
@@ -204,9 +200,9 @@ function MindMapSection() {
 
     return (
       <g onClick={(e) => { 
-        toggleNode(); // Permite expandir/colapsar ao clicar diretamente no nó
-        handleTreeClick(nodeDatum); // Define o nó selecionado para a sidebar
-        e.stopPropagation(); // Impede que o clique se propague para o wrapper da árvore
+        toggleNode(); 
+        handleTreeClick(nodeDatum); 
+        e.stopPropagation(); 
       }}>
         <circle 
           r={nodeRadius} 
@@ -220,20 +216,7 @@ function MindMapSection() {
           width={nodeRadius * 2.4}
           height={nodeRadius * 1.2}
         >
-          <div style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            height: '100%',
-            overflow: 'hidden',
-            wordBreak: 'break-word',
-            textAlign: 'center',
-            color: textColor,
-            fontSize: fontSize,
-            fontWeight: 'bold',
-            textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
-            padding: '2px'
-          }}>
+          <div className="flex justify-center items-center h-full overflow-hidden break-words text-center font-bold text-shadow-md p-0.5" style={{ color: textColor, fontSize: fontSize }}>
             {nodeDatum.name}
           </div>
         </foreignObject>
@@ -242,57 +225,42 @@ function MindMapSection() {
   };
 
   return (
-    <div style={{ padding: '20px', maxWidth: '1000px', margin: 'auto', position: 'relative' }}>
-      <h2 style={{ color: '#eceff4', marginBottom: '20px', textAlign: 'center' }}>
-        Seção de MAPA MENTAL
-      </h2>
-      <p style={{ color: '#d8dee9', textAlign: 'center', marginBottom: '30px' }}>
+    <section className="p-4">
+      <h2 className="text-3xl font-bold text-white mb-4">Gerador de Mapa Mental (IA-Zodíaco Virgo)</h2>
+      <p className="text-gray-300 mb-6">
         Explore suas ideias e conceitos de forma visual. Digite um texto para gerar um mapa mental com inteligência de LLM.
       </p>
 
-      <div className="section-content-box" style={{ background: '#3b4252', padding: '25px', borderRadius: '8px', boxShadow: '0 4px 8px rgba(0,0,0,0.2)' }}>
-        <h3 style={{ color: '#eceff4', marginBottom: '15px' }}>Gerar Novo Mapa Mental</h3>
+      <div className="bg-gray-700 p-4 rounded-lg shadow-md">
+        <h3 className="text-xl font-semibold text-white mb-3">Gerar Novo Mapa Mental</h3>
         <textarea
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
           placeholder="Digite o texto para gerar o mapa mental..."
           rows="8"
-          style={{
-            width: 'calc(100% - 20px)',
-            padding: '10px',
-            marginBottom: '15px',
-            borderRadius: '4px',
-            border: '1px solid #4c566a',
-            backgroundColor: '#2e3440',
-            color: '#eceff4',
-            fontSize: '1em',
-            resize: 'vertical'
-          }}
+          className="w-full p-3 mb-4 rounded-md border border-gray-600 bg-gray-800 text-gray-200 text-base resize-y focus:outline-none focus:ring-2 focus:ring-blue-500"
         ></textarea>
 
         <button
           onClick={handleGenerateMindMap}
           disabled={isLoading}
-          style={{
-            padding: '10px 20px',
-            backgroundColor: isLoading ? '#4c566a' : '#88c0d0',
-            color: '#2e3440',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: isLoading ? 'not-allowed' : 'pointer',
-            fontSize: '1em',
-            fontWeight: 'bold',
-            transition: 'background-color 0.3s ease'
-          }}
+          className={`px-5 py-2 rounded-md font-semibold transition-colors duration-300 ${
+            isLoading ? 'bg-gray-600 text-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 text-white'
+          }`}
         >
           {isLoading ? 'Gerando...' : 'Gerar Mapa Mental'}
         </button>
 
-        {/* Visualização do Mapa Mental Gerado */}
+        {message && (
+          <div className={`mt-4 p-3 rounded-md ${messageType === 'error' ? 'bg-red-800 text-red-100' : messageType === 'success' ? 'bg-green-800 text-green-100' : 'bg-blue-800 text-blue-100'}`}>
+            {message}
+          </div>
+        )}
+
         {mindMapData && (
-          <div style={{ marginTop: '30px', background: '#2e3440', borderRadius: '8px', border: '1px solid #4c566a', overflow: 'hidden' }}>
-            <h3 style={{ color: '#88c0d0', marginBottom: '10px', padding: '15px', borderBottom: '1px solid #4c566a' }}>Visualização do Mapa Mental:</h3>
-            <div id="treeWrapper" ref={treeWrapperRef} style={{ width: '100%', height: '500px', margin: 'auto', background: '#2e3440', position: 'relative' }}>
+          <div className="mt-8 p-4 rounded-lg border border-gray-600 bg-gray-800 overflow-hidden">
+            <h3 className="text-2xl font-bold text-blue-300 mb-4 pb-2 border-b border-gray-600">Visualização do Mapa Mental:</h3>
+            <div id="treeWrapper" ref={treeWrapperRef} className="w-full h-[500px] mx-auto bg-gray-800 relative">
               <Tree
                 data={mindMapData}
                 translate={translateState}
@@ -306,23 +274,12 @@ function MindMapSection() {
                 separation={{ siblings: 1.0, nonSiblings: 1.5 }}
                 enableDrag={true}
                 enableZoom={true}
-                // onNodeToggle é importante para atualizar o estado `collapsed` do nó no nosso `mindMapData`
                 onNodeToggle={nodeDatum => {
-                    // Atualiza o estado global do mapa mental para refletir o colapso/expansão
-                    handleToggleNodeChildren(nodeDatum); // Usa a mesma função para atualizar o estado
+                    handleToggleNodeChildren(nodeDatum);
                 }}
               />
-              {/* Controles de Zoom/Pan DENTRO da área do mapa */}
-              <div style={{ 
-                  position: 'absolute', 
-                  bottom: '15px', 
-                  right: '15px', // Colocado à direita para melhor visual
-                  display: 'flex', 
-                  flexDirection: 'column', // Empilha os botões
-                  gap: '10px',
-                  zIndex: 10 
-              }}>
-                  <button onClick={handleZoomIn} style={controlButtonStyle}>
+              <div className="absolute bottom-4 right-4 flex flex-col gap-2 z-10">
+                  <button onClick={handleZoomIn} className="bg-gray-700 text-gray-300 p-2 rounded-lg shadow-lg hover:bg-gray-600 transition duration-300 flex justify-center items-center w-10 h-10">
                       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <circle cx="11" cy="11" r="8"></circle>
                           <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -330,14 +287,14 @@ function MindMapSection() {
                           <line x1="8" y1="11" x2="14" y2="11"></line>
                       </svg>
                   </button>
-                  <button onClick={handleZoomOut} style={controlButtonStyle}>
+                  <button onClick={handleZoomOut} className="bg-gray-700 text-gray-300 p-2 rounded-lg shadow-lg hover:bg-gray-600 transition duration-300 flex justify-center items-center w-10 h-10">
                       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <circle cx="11" cy="11" r="8"></circle>
                           <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                           <line x1="8" y1="11" x2="14" y2="11"></line>
                       </svg>
                   </button>
-                  <button onClick={handleResetZoomPan} style={controlButtonStyle}>
+                  <button onClick={handleResetZoomPan} className="bg-gray-700 text-gray-300 p-2 rounded-lg shadow-lg hover:bg-gray-600 transition duration-300 flex justify-center items-center w-10 h-10">
                       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M3 10a7 7 0 1 1 14 0c0 1.62-.27 3.23-1.12 4.7l-4.14 4.14a2.91 2.91 0 0 1-4.13 0L3.12 14.7C2.27 13.23 2 11.62 2 10Z"></path>
                           <path d="M7 10h.01"></path>
@@ -352,77 +309,50 @@ function MindMapSection() {
 
         {/* Barra Lateral de Detalhes do Nó */}
         {isSidebarOpen && selectedNode && (
-          <div style={{
-            position: 'fixed', 
-            top: 0,
-            right: 0,
-            width: '300px',
-            height: '100%',
-            background: '#2e3440',
-            color: '#eceff4',
-            padding: '20px',
-            boxShadow: '-2px 0 10px rgba(0,0,0,0.5)',
-            zIndex: 100, 
-            overflowY: 'auto'
-          }}>
+          <div className="fixed top-0 right-0 w-72 h-full bg-gray-800 text-gray-100 p-6 shadow-xl z-50 overflow-y-auto">
             <button 
               onClick={closeSidebar} 
-              style={{ 
-                position: 'absolute', 
-                top: '10px', 
-                right: '10px', 
-                background: 'none', 
-                border: 'none', 
-                color: '#88c0d0', 
-                fontSize: '1.5em', 
-                cursor: 'pointer' 
-              }}>
+              className="absolute top-4 right-4 bg-transparent border-none text-blue-400 text-2xl cursor-pointer"
+            >
                 &times;
             </button>
-            <h3 style={{ color: '#88c0d0', marginBottom: '20px' }}>Detalhes do Nó</h3>
-            <p><span style={{ fontWeight: 'bold', color: '#a3be8c' }}>Nome:</span> {selectedNode.name}</p>
-            <p><span style={{ fontWeight: 'bold', color: '#a3be8c' }}>Score de Influência:</span> {selectedNode.attributes?.influence_score}</p>
-            {/* Mostra o estado de colapso - usa 'collapsed' da nossa estrutura de dados */}
-            <p><span style={{ fontWeight: 'bold', color: '#a3be8c' }}>Estado:</span> {selectedNode.collapsed ? 'Colapsado' : 'Expandido'}</p>
-            <p><span style={{ fontWeight: 'bold', color: '#a3be8c' }}>Número de Filhos:</span> {selectedNode.children ? selectedNode.children.length : 0}</p>
-
-            <h4 style={{ color: '#88c0d0', marginTop: '20px', marginBottom: '10px' }}>Ações:</h4>
-            {/* Botão de Expandir/Colapsar Filhos, agora usa 'selectedNode.collapsed' */}
+            <h3 className="text-blue-300 text-xl font-bold mb-5">Detalhes do Nó</h3>
+            <p className="mb-2"><span className="font-bold text-green-400">Nome:</span> {selectedNode.name}</p>
+            <p className="mb-2"><span className="font-bold text-green-400">Score de Influência:</span> {selectedNode.attributes?.influence_score}</p>
+            <p className="mb-2"><span className="font-bold text-green-400">Estado:</span> {selectedNode.collapsed ? 'Colapsado' : 'Expandido'}</p>
+            <p className="mb-2"><span className="font-bold text-green-400">Número de Filhos:</span> {selectedNode.children ? selectedNode.children.length : 0}</p>
+            
+            <h4 className="text-blue-300 text-lg font-bold mt-5 mb-3">Ações:</h4>
             {selectedNode.children !== undefined || (selectedNode.attributes && selectedNode.attributes.hasOwnProperty('originalChildren') && selectedNode.attributes.originalChildren) ? (
                 <button 
                     onClick={() => handleToggleNodeChildren(selectedNode)} 
-                    style={buttonStyle}
+                    className="py-2 px-4 bg-blue-600 text-white rounded-md font-semibold hover:bg-blue-700 transition duration-300 w-full mb-3"
                 >
                     {selectedNode.collapsed ? 'Expandir Filhos' : 'Colapsar Filhos'}
                 </button>
             ) : null}
-            {/* Outras ações futuras aqui */}
-            <button onClick={() => alert(`Editar conteúdo de "${selectedNode.name}" futuro`)} style={{ ...buttonStyle, marginTop: '10px' }}>
+            <button onClick={() => {
+                setMessage(`Função 'Editar Nó' para "${selectedNode.name}" futuro.`);
+                setMessageType('info');
+            }} className="py-2 px-4 bg-gray-600 text-gray-200 rounded-md font-semibold hover:bg-gray-700 transition duration-300 w-full">
                 Editar Nó
             </button>
           </div>
         )}
 
-        {/* Seção de Mapas Mentais Salvos (mantida do seu código original) */}
-        <h3 style={{ color: '#eceff4', marginTop: '40px', marginBottom: '15px' }}>Os seus Mapas Mentais Salvos</h3>
+        {/* Seção de Mapas Mentais Salvos */}
+        <h3 className="text-xl font-bold text-white mt-10 mb-4">Os seus Mapas Mentais Salvos</h3>
         {mindMaps.length > 0 ? (
-          <ul style={{ listStyleType: 'none', padding: 0 }}>
+          <ul className="list-none p-0">
             {mindMaps.map(mindMap => (
-              <li key={mindMap.id} style={{ marginBottom: '10px' }}>
-                <span style={{ color: '#d8dee9' }}>{mindMap.title}</span>
+              <li key={mindMap.id} className="mb-2">
+                <span className="text-gray-300">{mindMap.title}</span>
                 <button
-                  onClick={() => alert(`Abrir mapa mental: ${mindMap.title}`)}
-                  style={{
-                    marginLeft: '15px',
-                    padding: '5px 10px',
-                    backgroundColor: '#4c566a',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '3px',
-                    cursor: 'pointer',
-                    fontSize: '0.8em',
-                    transition: 'background-color 0.2s ease'
+                  onClick={() => {
+                      setMessage(`Função 'Abrir mapa mental: ${mindMap.title}' futuro.`);
+                      setMessageType('info');
                   }}
+                  className="ml-4 px-3 py-1 bg-gray-600 text-white rounded-md text-sm cursor-pointer hover:bg-gray-700 transition duration-300"
                 >
                   Abrir
                 </button>
@@ -430,74 +360,23 @@ function MindMapSection() {
             ))}
           </ul>
         ) : (
-          <p style={{ color: '#d8dee9' }}>Nenhum mapa mental criado ainda.</p>
+          <p className="text-gray-300">Nenhum mapa mental criado ainda.</p>
         )}
         <button
           onClick={handleNewMindMap}
-          style={{
-            padding: '8px 15px',
-            backgroundColor: '#5e81ac',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            marginTop: '10px',
-            transition: 'background-color 0.2s ease'
-          }}
+          className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-md font-semibold hover:bg-indigo-700 transition duration-300 mr-2"
         >
           Novo Mapa Mental (Limpar)
         </button>
         <button
           onClick={handleLoadMindMap}
-          style={{
-            padding: '8px 15px',
-            backgroundColor: '#5e81ac',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            marginTop: '10px',
-            marginLeft: '10px',
-            transition: 'background-color 0.2s ease'
-          }}
+          className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-md font-semibold hover:bg-indigo-700 transition duration-300"
         >
           Carregar Mapa Mental
         </button>
       </div>
-    </div>
+    </section>
   );
 }
-
-// Estilo de botão base para reutilização
-const buttonStyle = {
-    padding: '8px 15px',
-    backgroundColor: '#5e81ac', 
-    color: 'white',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    fontSize: '0.9em',
-    fontWeight: 'bold',
-    transition: 'background-color 0.3s ease'
-};
-
-// Estilo para os botões de controle de zoom/pan (separado para clareza)
-const controlButtonStyle = {
-    background: '#4c566a', // Cor para os controles de mapa
-    color: '#eceff4',
-    border: 'none',
-    borderRadius: '8px', // Mais arredondado para um visual de botão flutuante
-    cursor: 'pointer',
-    fontSize: '0.9em',
-    fontWeight: 'bold',
-    transition: 'background-color 0.3s ease, transform 0.2s ease',
-    boxShadow: '0 4px 8px rgba(0,0,0,0.4)', // Sombra para destaque
-    display: 'flex', // Para centralizar o SVG
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: '40px', // Tamanho fixo para os botões de ícone
-    height: '40px',
-    padding: '0' // Remove padding extra
-};
 
 export default MindMapSection;
