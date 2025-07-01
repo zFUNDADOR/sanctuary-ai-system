@@ -15,11 +15,41 @@ html, body, #root {
 
 body {
   font-family: 'Inter', sans-serif; 
-  background-color: #1a202c; 
-  color: #e2e8f0; 
+  background-color: #1a202c; /* Cor de fundo padrão para garantir que não haja "buracos" */
+  color: #e2e8f0; /* Cor de texto padrão */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/* Classes para os Wallpapers (se usados diretamente em main.jsx ou index.html) */
+
+/* Fundo fixo para o Santuário */
+.bg-sanctuary-fixed {
+  background-image: url('https://placehold.co/1920x1080/1a202c/e2e8f0?text=Sanctuary+Background'); /* Placeholder */
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed; /* Fundo fixo */
+  transition: background-image 0.5s ease-in-out;
+}
+
+/* Wallpaper de Estrelas */
+.bg-stars-pattern {
+  background-image: url('https://placehold.co/1920x1080/000000/FFFFFF?text=Stars+Pattern'); /* Placeholder */
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  transition: background-image 0.5s ease-in-out;
+}
+
+/* Wallpaper de Grade Tecnológica */
+.bg-tech-grid-pattern {
+  background-image: url('https://placehold.co/1920x1080/2d3748/63b3ed?text=Tech+Grid'); /* Placeholder */
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  transition: background-image 0.5s ease-in-out;
+}
+
 
 /* Variáveis CSS para fallback ou uso específico (se necessário, mas priorize Tailwind) */
 :root {

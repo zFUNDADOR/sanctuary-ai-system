@@ -1,145 +1,199 @@
 import React, { useState } from 'react';
-import './App.css';
-import MindMapSection from './components/sections/MindMapSection';
-import VideosSection from './components/sections/VideosSection';
-import SeoSection from './components/sections/SeoSection';
+import './App.css'; 
 
+// Importa os componentes de seção
+import SanctuarySection from './components/sections/SanctuarySection';
+import VirgoAIAssistant from './components/sections/VirgoAIAssistant'; 
+import GeminiAIAssistant from './components/sections/GeminiAIAssistant';
+import ControlZone from './components/sections/ControlZone'; 
+import LeoContentCreator from './components/sections/LeoContentCreator';
+
+// Importa os componentes comuns
+import DebugPanel from './components/common/DebugPanel'; 
+import ThemeToggle from './components/common/ThemeToggle'; 
+import WallpaperSelector from './components/common/WallpaperSelector'; 
+import ZodiacTheme from './components/common/ZodiacTheme';
+
+// Importação do hook de debug
+import { useDebugLogger } from './hooks/useDebugLogger'; 
+
+// Importa o ThemeProvider e useTheme do seu contexto
+import { ThemeProvider, useTheme } from './contexts/ThemeContext'; 
+
+// Importações para ícones
+import { MdBugReport, MdCode } from 'react-icons/md';
+
+
+// O componente principal App.jsx do seu Sanctuary
 function App() {
-  const [activeSection, setActiveSection] = useState('SEO');
-  const [currentSectionTheme, setCurrentSectionTheme] = useState({
-    sectionBackground: 'rgba(29, 78, 216, 0.7)', 
-    buttonDisplayColor: '#1d4ed8' 
-  }); 
-  const [isWallpaperActive, setIsWallpaperActive] = useState(false);
-  const [selectedWallpaperFile, setSelectedWallpaperFile] = useState(null);
-
-  const themes = {
-    'red': { sectionBackground: 'rgba(185, 28, 28, 0.7)', buttonDisplayColor: '#b91c1c' },
-    'blue': { sectionBackground: 'rgba(29, 78, 216, 0.7)', buttonDisplayColor: '#1d4ed8' },
-    'green': { sectionBackground: 'rgba(4, 120, 87, 0.7)', buttonDisplayColor: '#047857' },
-    'purple': { sectionBackground: 'rgba(126, 34, 206, 0.7)', buttonDisplayColor: '#7e22ce' },
-    'yellow': { sectionBackground: 'rgba(245, 158, 11, 0.7)', buttonDisplayColor: '#f59e0b' },
-    'indigo': { sectionBackground: 'rgba(79, 70, 229, 0.7)', buttonDisplayColor: '#4f46e5' },
-    'gray': { sectionBackground: 'rgba(55, 65, 81, 0.7)', buttonDisplayColor: '#374151' }, 
-  };
-
-  const handleThemeChange = (themeName) => {
-    setCurrentSectionTheme(themes[themeName]); 
-    console.log(`Cor do balão alterada para: ${themeName}`);
-    console.log(`Wallpaper Ativo: ${isWallpaperActive}, Arquivo Wallpaper: ${selectedWallpaperFile ? selectedWallpaperFile.name : 'Nenhum'}`);
-  };
-
-  const handleWallpaperFileChange = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      setSelectedWallpaperFile(file);
-      setIsWallpaperActive(true); 
-      setCurrentSectionTheme(themes['gray']); 
-      console.log(`Wallpaper selecionado: ${file.name}`);
-    } else {
-      console.log('Nenhum arquivo de wallpaper selecionado.');
-    }
-  };
-
-  let mainBackgroundClasses = '';
-  let mainBackgroundStyle = {};
-
-  if (isWallpaperActive && selectedWallpaperFile) {
-    mainBackgroundClasses = 'bg-cover bg-center';
-    mainBackgroundStyle = { 
-      backgroundImage: `url(${URL.createObjectURL(selectedWallpaperFile)})`, 
-      transition: 'background-image 0.5s ease-in-out' 
-    };
-  } else {
-    mainBackgroundClasses = 'bg-gray-900'; 
-    mainBackgroundStyle = {}; 
-  }
+  // Obtém o tema, wallpaper, e a view atual do contexto
+  const { currentTheme, currentWallpaper, setCurrentWallpaper, currentView, setCurrentView } = useTheme();
   
-  const currentTextColorClass = 'text-gray-100';
+  // Estado para controlar a seção ativa (agora baseada no zodíaco ou "Sanctuary")
+  // Inicializa com 'Sanctuary' ou 'zodiac-theme' se for a view inicial
+  const [activeSection, setActiveSection] = useState(currentView === 'zodiac-theme' ? 'ZODIAC_THEME' : 'Sanctuary'); 
+  // Estado para controlar a visibilidade do painel de debug
+  const [isDebugPanelOpen, setIsDebugPanelOpen] = useState(false);
+  
+  // Hook de debug
+  const { logs, log: addDebugMessage, clearLogs, exportLogs } = useDebugLogger();
+
+  // Função para mudar a seção ativa
+  const handleSelectSection = (sectionName) => {
+    setActiveSection(sectionName);
+    // Se a seção selecionada não for 'THEMES' nem 'WALLPAPERS', resetamos a view para 'main'
+    if (sectionName !== 'THEMES' && sectionName !== 'WALLPAPERS' && sectionName !== 'ZODIAC_THEME') {
+      setCurrentView('main');
+    }
+    addDebugMessage(`Navegando para a seção: ${sectionName}`, 'info');
+  };
+
+  // Função para mudar o wallpaper
+  const handleSelectWallpaper = (wallpaperUrl) => {
+    setCurrentWallpaper(wallpaperUrl);
+    addDebugMessage(`Wallpaper alterado para: ${wallpaperUrl}`, 'info');
+  };
 
   return (
-    <div className={`min-h-screen ${mainBackgroundClasses} ${currentTextColorClass} transition-colors duration-500`} style={mainBackgroundStyle}>
-      <header className="bg-gray-800 p-4 shadow-lg flex flex-col sm:flex-row justify-between items-center text-white">
-        <h1 className="text-2xl font-bold mb-4 sm:mb-0">Sanctuary AI System</h1>
+    <div 
+      className={`min-h-screen flex flex-col transition-all duration-500 ease-in-out`}
+      style={{
+        backgroundImage: `url(${currentWallpaper})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundAttachment: 'fixed',
+        backgroundColor: currentTheme.bgMain, // Fallback ou cor base do tema
+      }}
+    >
+      {/* Cabeçalho Principal */}
+      <header className="w-full p-4 bg-gray-900 bg-opacity-70 shadow-lg flex justify-between items-center z-10">
+        <h1 className="text-4xl font-extrabold text-white tracking-wide">
+          <span className={`${currentTheme.highlight} transition-colors duration-500`}>Sanctuary</span> AI
+        </h1>
         <nav className="flex space-x-4">
-          <button
-            className={`px-4 py-2 rounded-md font-semibold transition-colors duration-300 
-              ${activeSection === 'SEO' ? 'bg-blue-600 text-white' : 'bg-gray-600 hover:bg-gray-700 text-gray-200'}`}
-            onClick={() => setActiveSection('SEO')}
+          <button 
+            onClick={() => handleSelectSection('Sanctuary')} 
+            className={`px-4 py-2 rounded-full font-semibold transition-all duration-300 
+                        ${activeSection === 'Sanctuary' ? currentTheme.bubble : 'bg-gray-700 hover:bg-gray-600'} 
+                        text-white shadow-md`}
           >
-            SEO
+            Santuário
           </button>
+          {/* Botão para Zona de Controle */}
           <button
-            className={`px-4 py-2 rounded-md font-semibold transition-colors duration-300 
-              ${activeSection === 'VIDEOS' ? 'bg-blue-600 text-white' : 'bg-gray-600 hover:bg-gray-700 text-gray-200'}`}
-            onClick={() => setActiveSection('VIDEOS')}
+            onClick={() => handleSelectSection('CONTROL_ZONE')}
+            className={`px-4 py-2 rounded-full font-semibold transition-all duration-300 
+                        ${activeSection === 'CONTROL_ZONE' ? currentTheme.bubble : 'bg-gray-700 hover:bg-gray-600'} 
+                        text-white shadow-md flex items-center space-x-2`}
           >
-            VÍDEOS
+            <MdCode className="text-xl" />
+            <span>Controle</span>
           </button>
+          {/* Botão de Debug */}
           <button
-            className={`px-4 py-2 rounded-md font-semibold transition-colors duration-300 
-              ${activeSection === 'MAPA MENTAL' ? 'bg-blue-600 text-white' : 'bg-gray-600 hover:bg-gray-700 text-gray-200'}`}
-            onClick={() => setActiveSection('MAPA MENTAL')}
+            onClick={() => setIsDebugPanelOpen(!isDebugPanelOpen)}
+            className="p-2 rounded-full bg-gray-700 hover:bg-gray-600 text-white shadow-md transition-colors duration-300"
+            aria-label="Abrir/Fechar Painel de Debug"
           >
-            MAPA MENTAL
+            <MdBugReport className="text-2xl" />
           </button>
         </nav>
       </header>
 
-      <div className="p-4 bg-gray-700 shadow-md flex flex-wrap items-center gap-4 text-white">
-        <span className="font-semibold">Cor dos Balões:</span>
-        {Object.keys(themes).map((themeName) => (
-          <button
-            key={themeName}
-            className={`w-8 h-8 rounded-full border-2 cursor-pointer transition-all duration-300 
-                        ${currentSectionTheme.buttonDisplayColor === themes[themeName].buttonDisplayColor ? 'border-blue-400 scale-110' : 'border-transparent hover:scale-105'}`}
-            onClick={() => handleThemeChange(themeName)}
-            style={{ backgroundColor: themes[themeName].buttonDisplayColor }} 
-          >
-          </button>
-        ))}
-        
-        <input
-          type="file"
-          id="wallpaper-upload"
-          accept="image/*, .gif" 
-          className="hidden"
-          onChange={handleWallpaperFileChange}
-        />
-        <label 
-          htmlFor="wallpaper-upload" 
-          className={`px-4 py-2 rounded-md font-semibold transition-colors duration-300 cursor-pointer 
-            ${isWallpaperActive ? 'bg-blue-600 text-white' : 'bg-gray-600 hover:bg-gray-700 text-gray-200'}`}
-        >
-          {isWallpaperActive && selectedWallpaperFile ? `Wallpaper (${selectedWallpaperFile.name.substring(0, 10)}...)` : 'Selecionar Wallpaper'}
-        </label>
-        {isWallpaperActive && selectedWallpaperFile && ( 
-          <button
-            className="ml-2 px-4 py-2 rounded-md font-semibold transition-colors duration-300 bg-red-600 hover:bg-red-700 text-white"
-            onClick={() => { 
-              setIsWallpaperActive(false); 
-              setSelectedWallpaperFile(null); 
-              setCurrentSectionTheme(themes['blue']); 
-              console.log('Wallpaper removido.');
-            }} 
-          >
-            Remover Wallpaper
-          </button>
+      {/* Conteúdo Principal */}
+      <main className="flex-grow p-8 flex flex-col items-center justify-center relative z-0">
+        {/* Renderiza as seções com base no estado activeSection ou currentView */}
+        {activeSection === 'Sanctuary' && currentView === 'main' && (
+          <SanctuarySection 
+            onSelectZodiac={handleSelectSection} // Agora usa handleSelectSection para mudar para módulos específicos
+            addDebugMessage={addDebugMessage}
+          />
         )}
-        {selectedWallpaperFile && (
-          <span className="ml-4 text-yellow-300">
-            *A imagem é mostrada localmente. Upload real requer backend.
-          </span>
+        {activeSection === 'VIRGEM' && currentView === 'main' && (
+          <VirgoAIAssistant 
+            addDebugMessage={addDebugMessage}
+          />
         )}
-      </div>
-
-      <main className="p-4">
-        {activeSection === 'SEO' && <SeoSection sectionBgColor={currentSectionTheme.sectionBackground} />}
-        {activeSection === 'VIDEOS' && <VideosSection sectionBgColor={currentSectionTheme.sectionBackground} />}
-        {activeSection === 'MAPA MENTAL' && <MindMapSection sectionBgColor={currentSectionTheme.sectionBackground} />}
+        {activeSection === 'LEÃO' && currentView === 'main' && (
+          <LeoContentCreator 
+            addDebugMessage={addDebugMessage}
+          />
+        )}
+        {activeSection === 'AQUÁRIO' && currentView === 'main' && (
+          <ControlZone 
+            addDebugMessage={addDebugMessage}
+          />
+        )}
+        {activeSection === 'GÊMEOS' && currentView === 'main' && ( 
+          <GeminiAIAssistant 
+            addDebugMessage={addDebugMessage}
+          />
+        )}
+        {activeSection === 'CONTROL_ZONE' && currentView === 'main' && (
+          <ControlZone 
+            addDebugMessage={addDebugMessage}
+          />
+        )}
+        {/* Seções de Configuração */}
+        {activeSection === 'THEMES' && currentView === 'main' && (
+          <ThemeToggle /> 
+        )}
+        {activeSection === 'WALLPAPERS' && currentView === 'main' && (
+          <WallpaperSelector 
+            onSelectWallpaper={handleSelectWallpaper} 
+            currentWallpaper={currentWallpaper} 
+          />
+        )}
+        {/* Renderiza o ZodiacTheme quando a view for 'zodiac-theme' */}
+        {currentView === 'zodiac-theme' && (
+          <ZodiacTheme 
+            addDebugMessage={addDebugMessage}
+            onBackToWallpapers={() => {
+              setCurrentView('main');
+              setActiveSection('WALLPAPERS'); // Volta para a seção de wallpapers
+            }}
+          />
+        )}
       </main>
+
+      {/* Renderiza o Painel de Debug se isDebugPanelOpen for true */}
+      {isDebugPanelOpen && (
+        <DebugPanel 
+          logs={logs} 
+          onClose={() => setIsDebugPanelOpen(false)} 
+          onClear={clearLogs} 
+          onExport={exportLogs} 
+        />
+      )}
+
+      {/* Rodapé - Adicione botões para temas e wallpapers */}
+      <footer className="w-full p-4 bg-gray-900 bg-opacity-70 shadow-lg flex justify-center space-x-4 z-10">
+        <button 
+          onClick={() => handleSelectSection('THEMES')} 
+          className={`px-4 py-2 rounded-full font-semibold transition-all duration-300 
+                      ${activeSection === 'THEMES' ? currentTheme.bubble : 'bg-gray-700 hover:bg-gray-600'} 
+                      text-white shadow-md`}
+        >
+          Temas
+        </button>
+        <button 
+          onClick={() => handleSelectSection('WALLPAPERS')} 
+          className={`px-4 py-2 rounded-full font-semibold transition-all duration-300 
+                      ${activeSection === 'WALLPAPERS' ? currentTheme.bubble : 'bg-gray-700 hover:bg-gray-600'} 
+                      text-white shadow-md`}
+        >
+          Wallpapers
+        </button>
+      </footer>
     </div>
   );
 }
 
-export default App;
+// O componente App é envolvido pelo ThemeProvider para que todos os seus filhos tenham acesso ao contexto do tema.
+export default function AppWithThemeProvider() {
+  return (
+    <ThemeProvider>
+      <App />
+    </ThemeProvider>
+  );
+}
