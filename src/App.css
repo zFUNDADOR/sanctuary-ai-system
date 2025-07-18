@@ -1,3 +1,35 @@
 /* src/App.css */
 /* Este arquivo será mantido minimalista. */
 /* A maioria dos estilos será aplicada diretamente nos componentes React usando classes Tailwind CSS. */
+
+/* Estilos para o SyntaxHighlighter para garantir a numeração de linha */
+.custom-syntax-highlighter .linenumber {
+  /* Força a visibilidade dos números de linha */
+  display: inline-block !important; 
+  /* Adicione outros estilos se necessário, como largura mínima ou alinhamento */
+  min-width: 2em; /* Garante espaço suficiente para os números */
+  text-align: right; /* Alinha os números à direita */
+  padding-right: 0.5em; /* Espaçamento entre o número e o código */
+}
+
+.custom-syntax-highlighter pre {
+  /* Garante que o pre-wrap e word-break funcionem */
+  white-space: pre-wrap !important;
+  word-break: break-all !important;
+}
+
+.custom-syntax-highlighter code {
+  /* Garante que o code também quebre */
+  white-space: pre-wrap !important;
+  word-break: break-all !important;
+}
+
+/* --- ESTILOS GERAIS DO LAYOUT --- */
+
+/* 1. Garante que o aplicativo ocupe toda a tela */
+html, body, #root, #app {
+  height: 100%; /* Faz com que eles ocupem 100% da altura disponível */
+  margin: 0;    /* Remove margens padrão */
+  padding: 0;   /* Remove preenchimento padrão */
+  overflow: hidden; /* Importante: Esconde barras de rolagem que podem aparecer por engano */
+}

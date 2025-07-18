@@ -1,0 +1,69 @@
+/* src/components/sections/MarketSphere.css */
+
+/* Estilos para o contêiner da esfera 3D */
+#market-sphere-container {
+    position: relative;
+    width: 100%;
+    height: 600px; /* Altura ajustável conforme necessário */
+    background-color: #f0f0f0; /* Fundo claro para a área do canvas */
+    border-radius: 8px;
+    overflow: hidden; /* Garante que o conteúdo 3D permaneça dentro dos limites */
+}
+
+/* Estilos para as "dicas" (tooltips) que aparecem quando você passa o mouse na esfera */
+.sphere-tooltip {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    pointer-events: none; /* MUITO IMPORTANTE: Faz com que o balão não "bloqueie" cliques na esfera */
+    opacity: 0; /* Começa invisível */
+    transition: opacity 0.2s ease-in-out; /* Faz ele aparecer e desaparecer suavemente */
+    z-index: 1000 !important; /* Força o z-index para garantir que esteja acima de tudo */
+}
+
+/* Quando a "dica" está ativa (visível) */
+.sphere-tooltip.active {
+    opacity: 1 !important; /* Fica totalmente visível */
+    pointer-events: auto !important; /* Permite eventos de ponteiro quando ativo */
+}
+
+/* Estilos para o botão de retorno */
+#back-to-sectors-btn {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1001 !important; /* Garante que o botão esteja acima do tooltip */
+    padding: 10px 20px;
+    border-radius: 8px;
+    background-color: #3498db; /* Cor de exemplo */
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+#back-to-sectors-btn:hover {
+    background-color: #2980b9;
+}
+
+/* Estilos para o canvas dentro do contêiner da esfera (já deve estar no App.css, mas reconfirmando) */
+#market-sphere-container canvas {
+    display: block; /* Remove um pequeno espaço extra que o navegador pode adicionar */
+    width: 100%;    /* Faz com que ocupe 100% da largura do seu contêiner */
+    height: 100%;   /* Faz com que ocupe 100% da altura do seu contêiner */
+}
+
+/* Cores de setor e vetor (se usados diretamente via CSS, mas Three.js lida com isso) */
+/* Estas são apenas referência, os materiais do Three.js lidarão com as cores reais */
+:root {
+    --sector-red: #e74c3c;
+    --sector-green: #2ecc71;
+    --sector-blue: #3498db;
+    --sector-purple: #9b59b6;
+    --vector-active: #2ecc71;
+    --vector-inactive: #e74c3c;
+}
